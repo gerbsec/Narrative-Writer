@@ -1,0 +1,6 @@
+# Penetration Testing Narrative Generator
+# No external dependencies required for basic functionality
+
+# Optional: For future ChatGPT API integration
+# openai>=1.0.0
+# python-dotenv>=1.0.0
