@@ -101,6 +101,53 @@ class PenTestNarrativeGenerator:
                         }
                     }
                 ],
+                "network": [
+                    {
+                        "title": "Comprehensive Service Discovery and Enumeration",
+                        "question": "Did you perform comprehensive service discovery and enumeration before web application testing?",
+                        "content": "{testing_company} conducted comprehensive service discovery and enumeration against {client_company}'s external infrastructure to identify all running services, their versions, and potential attack vectors before proceeding with web application testing. This critical phase involved port scanning, service fingerprinting, and vulnerability assessment to build a complete picture of the attack surface. {testing_company} utilized multiple scanning techniques including TCP/UDP port scans, service version detection, and OS fingerprinting to identify all accessible services and their configurations.",
+                        "screenshot": {
+                            "placeholder": "[SCREENSHOT: Service Discovery Results]",
+                            "caption": "Command: nmap -sS -sV -sC -O -A {target_range} - Screenshot showing comprehensive service discovery results with identified services, versions, and potential vulnerabilities."
+                        }
+                    },
+                    {
+                        "title": "Banner Grabbing and Service Fingerprinting",
+                        "question": "Did you perform banner grabbing and service fingerprinting?",
+                        "content": "{testing_company} performed banner grabbing and service fingerprinting on all discovered services to identify software versions and configurations. This process involved connecting to services and analyzing response headers and banners to determine the technology stack and potential vulnerabilities. {testing_company} documented all discovered services and their versions for further analysis.",
+                        "screenshot": {
+                            "placeholder": "[SCREENSHOT: Banner Grabbing]",
+                            "caption": "Command: nc -nv {target} {port} - Screenshot showing service banners and version information."
+                        }
+                    },
+                    {
+                        "title": "SSL/TLS Configuration Analysis",
+                        "question": "Did you analyze SSL/TLS configurations?",
+                        "content": "{testing_company} conducted comprehensive SSL/TLS configuration analysis on all HTTPS services to identify cryptographic weaknesses and misconfigurations. This testing included cipher suite analysis, certificate validation, and protocol version testing. {testing_company} identified various SSL/TLS issues that could impact the security of encrypted communications.",
+                        "screenshot": {
+                            "placeholder": "[SCREENSHOT: SSL Analysis]",
+                            "caption": "Command: sslscan {target}:443 - Screenshot showing SSL/TLS configuration analysis results."
+                        }
+                    },
+                    {
+                        "title": "Email Server Testing",
+                        "question": "Did you test email servers and configurations?",
+                        "content": "{testing_company} tested email servers and configurations to identify potential security issues and information disclosure. This testing included SMTP enumeration, email spoofing tests, and configuration analysis. {testing_company} identified various email-related security issues that could be exploited for social engineering or information gathering.",
+                        "screenshot": {
+                            "placeholder": "[SCREENSHOT: Email Server Testing]",
+                            "caption": "Command: smtp-user-enum -M VRFY -U users.txt -t {mail_server} - Screenshot showing email server enumeration results."
+                        }
+                    },
+                    {
+                        "title": "Network Service Exploitation",
+                        "question": "Did you attempt to exploit discovered network services before web application testing?",
+                        "content": "{testing_company} attempted to exploit discovered network services to demonstrate potential attack vectors and gain initial access to {client_company}'s infrastructure. This testing included exploiting vulnerable services, testing default credentials, and attempting privilege escalation on compromised services. {testing_company} documented all successful exploitations and their potential impact on the organization's security posture.",
+                        "screenshot": {
+                            "placeholder": "[SCREENSHOT: Network Service Exploitation]",
+                            "caption": "Screenshot showing successful network service exploitation and initial access demonstration."
+                        }
+                    }
+                ],
                 "web_app": [
                     {
                         "title": "Web Application Discovery",
@@ -190,44 +237,6 @@ class PenTestNarrativeGenerator:
                         "screenshot": {
                             "placeholder": "[SCREENSHOT: IDOR Vulnerability]",
                             "caption": "Screenshot showing successful access to unauthorized resources through direct object reference manipulation."
-                        }
-                    }
-                ],
-                "network": [
-                    {
-                        "title": "Port Scanning and Service Enumeration",
-                        "question": "Did you perform port scanning and service enumeration?",
-                        "content": "{testing_company} conducted comprehensive port scanning against {client_company}'s external infrastructure to identify open ports and running services. This process utilized both TCP and UDP scanning techniques to ensure complete coverage. {testing_company} performed service enumeration on discovered ports to identify software versions and potential vulnerabilities.",
-                        "screenshot": {
-                            "placeholder": "[SCREENSHOT: Port Scan Results]",
-                            "caption": "Command: nmap -sS -sV -O {target_range} - Screenshot showing port scan results with discovered services and versions."
-                        }
-                    },
-                    {
-                        "title": "Banner Grabbing and Service Fingerprinting",
-                        "question": "Did you perform banner grabbing and service fingerprinting?",
-                        "content": "{testing_company} performed banner grabbing and service fingerprinting on all discovered services to identify software versions and configurations. This process involved connecting to services and analyzing response headers and banners to determine the technology stack and potential vulnerabilities. {testing_company} documented all discovered services and their versions for further analysis.",
-                        "screenshot": {
-                            "placeholder": "[SCREENSHOT: Banner Grabbing]",
-                            "caption": "Command: nc -nv {target} {port} - Screenshot showing service banners and version information."
-                        }
-                    },
-                    {
-                        "title": "SSL/TLS Configuration Analysis",
-                        "question": "Did you analyze SSL/TLS configurations?",
-                        "content": "{testing_company} conducted comprehensive SSL/TLS configuration analysis on all HTTPS services to identify cryptographic weaknesses and misconfigurations. This testing included cipher suite analysis, certificate validation, and protocol version testing. {testing_company} identified various SSL/TLS issues that could impact the security of encrypted communications.",
-                        "screenshot": {
-                            "placeholder": "[SCREENSHOT: SSL Analysis]",
-                            "caption": "Command: sslscan {target}:443 - Screenshot showing SSL/TLS configuration analysis results."
-                        }
-                    },
-                    {
-                        "title": "Email Server Testing",
-                        "question": "Did you test email servers and configurations?",
-                        "content": "{testing_company} tested email servers and configurations to identify potential security issues and information disclosure. This testing included SMTP enumeration, email spoofing tests, and configuration analysis. {testing_company} identified various email-related security issues that could be exploited for social engineering or information gathering.",
-                        "screenshot": {
-                            "placeholder": "[SCREENSHOT: Email Server Testing]",
-                            "caption": "Command: smtp-user-enum -M VRFY -U users.txt -t {mail_server} - Screenshot showing email server enumeration results."
                         }
                     }
                 ],
@@ -837,7 +846,39 @@ class PenTestNarrativeGenerator:
             narrative.append("")
             
             for subcategory, techniques in subcategories.items():
-                narrative.append(f"#### {subcategory.replace('_', ' ').title()}")
+                # Handle special capitalization for acronyms
+                subcategory_title = subcategory.replace('_', ' ').title()
+                if subcategory == 'osint':
+                    subcategory_title = 'OSINT'
+                elif subcategory == 'dns':
+                    subcategory_title = 'DNS'
+                elif subcategory == 'web_app':
+                    subcategory_title = 'Web Application'
+                elif subcategory == 'network':
+                    subcategory_title = 'Network'
+                elif subcategory == 'vulnerability_assessment':
+                    subcategory_title = 'Vulnerability Assessment'
+                elif subcategory == 'credential_testing':
+                    subcategory_title = 'Credential Testing'
+                elif subcategory == 'network_discovery':
+                    subcategory_title = 'Network Discovery'
+                elif subcategory == 'privilege_escalation':
+                    subcategory_title = 'Privilege Escalation'
+                elif subcategory == 'lateral_movement':
+                    subcategory_title = 'Lateral Movement'
+                elif subcategory == 'persistence':
+                    subcategory_title = 'Persistence'
+                elif subcategory == 'data_exfiltration':
+                    subcategory_title = 'Data Exfiltration'
+                elif subcategory == 'credential_harvesting':
+                    subcategory_title = 'Credential Harvesting'
+                elif subcategory == 'defense_evasion':
+                    subcategory_title = 'Defense Evasion'
+                elif subcategory == 'adcs_vulnerabilities':
+                    subcategory_title = 'ADCS Vulnerabilities'
+                elif subcategory == 'internal_vulnerability_assessment':
+                    subcategory_title = 'Internal Vulnerability Assessment'
+                narrative.append(f"#### {subcategory_title}")
                 narrative.append("")
                 
                 for technique in techniques:
