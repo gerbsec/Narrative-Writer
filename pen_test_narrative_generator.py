@@ -34,7 +34,7 @@ class PenTestNarrativeGenerator:
     def _finding_tail_sentence(self, found: bool) -> str:
         """Return a safe final sentence that does not over-claim findings."""
         if found:
-            return "Relevant observations from this activity are documented in the Findings section of this report."
+            return "Relevant observations from this activity are documented in the report"
         return "No material issues or noteworthy observations were identified during this activity."
 
     def _subcategory_order(self, category: str) -> List[str]:
