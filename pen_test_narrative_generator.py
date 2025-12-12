@@ -20,6 +20,52 @@ class PenTestNarrativeGenerator:
         self.test_type = ""
         self.selected_techniques = []
         self.narrative_blocks = self._load_narrative_blocks()
+
+    def _ask_yes_no(self, prompt: str) -> bool:
+        """Ask a yes/no question until a valid answer is provided."""
+        while True:
+            response = input(prompt).strip().lower()
+            if response in ["y", "yes"]:
+                return True
+            if response in ["n", "no"]:
+                return False
+            print("    Please enter 'y' for yes or 'n' for no.")
+
+    def _finding_tail_sentence(self, found: bool) -> str:
+        """Return a safe final sentence that does not over-claim findings."""
+        if found:
+            return "Reportable findings identified during this activity are detailed in the Findings section of this report."
+        return "No reportable findings were identified during this activity."
+
+    def _subcategory_order(self, category: str) -> List[str]:
+        """
+        Define a tester-realistic ordering for prompt flow + narrative output.
+
+        Any subcategories not listed here will be appended afterwards in their
+        existing insertion order.
+        """
+        if category == "external":
+            return [
+                "osint",
+                "dns",
+                "network",
+                "web_app",
+                "vulnerability_assessment",
+                "credential_testing",
+            ]
+        if category == "internal":
+            return [
+                "network_discovery",
+                "internal_vulnerability_assessment",
+                "credential_harvesting",
+                "lateral_movement",
+                "privilege_escalation",
+                "persistence",
+                "defense_evasion",
+                "data_exfiltration",
+                "adcs_vulnerabilities",
+            ]
+        return []
         
     def _load_narrative_blocks(self) -> Dict[str, Any]:
         """Load narrative blocks for different test types"""
@@ -776,22 +822,25 @@ class PenTestNarrativeGenerator:
     
     def _select_category_techniques(self, category: str):
         """Select techniques for a specific category"""
-        for category_name, techniques in self.narrative_blocks[category].items():
+        blocks = self.narrative_blocks[category]
+        desired_order = self._subcategory_order(category)
+        ordered_keys = [k for k in desired_order if k in blocks] + [k for k in blocks.keys() if k not in desired_order]
+
+        for category_name in ordered_keys:
+            techniques = blocks[category_name]
             print(f"\n{category_name.upper().replace('_', ' ')}:")
             for technique in techniques:
-                while True:
-                    response = input(f"  {technique['question']} (y/n): ").strip().lower()
-                    if response in ['y', 'yes']:
-                        self.selected_techniques.append({
-                            'category': category,
-                            'subcategory': category_name,
-                            'technique': technique
-                        })
-                        break
-                    elif response in ['n', 'no']:
-                        break
-                    else:
-                        print("    Please enter 'y' for yes or 'n' for no.")
+                performed = self._ask_yes_no(f"  {technique['question']} (y/n): ")
+                if not performed:
+                    continue
+
+                found = self._ask_yes_no("    Did you identify any reportable findings during this step? (y/n): ")
+                self.selected_techniques.append({
+                    "category": category,
+                    "subcategory": category_name,
+                    "technique": technique,
+                    "found": found,
+                })
     
     def generate_narrative(self) -> str:
         """Generate the final narrative document"""
@@ -831,21 +880,26 @@ class PenTestNarrativeGenerator:
         
         # Group techniques by category
         categories = {}
-        for technique in self.selected_techniques:
-            cat = technique['category']
-            subcat = technique['subcategory']
+        for entry in self.selected_techniques:
+            cat = entry["category"]
+            subcat = entry["subcategory"]
             if cat not in categories:
                 categories[cat] = {}
             if subcat not in categories[cat]:
                 categories[cat][subcat] = []
-            categories[cat][subcat].append(technique['technique'])
+            categories[cat][subcat].append(entry)
         
         # Generate content for each category
-        for category, subcategories in categories.items():
+        for category in sorted(categories.keys(), key=lambda c: {"external": 0, "internal": 1}.get(c, 99)):
+            subcategories = categories[category]
             narrative.append(f"### {category.upper()} ASSESSMENT")
             narrative.append("")
             
-            for subcategory, techniques in subcategories.items():
+            desired_order = self._subcategory_order(category)
+            ordered_subcats = [k for k in desired_order if k in subcategories] + [k for k in subcategories.keys() if k not in desired_order]
+
+            for subcategory in ordered_subcats:
+                techniques = subcategories[subcategory]
                 # Handle special capitalization for acronyms
                 subcategory_title = subcategory.replace('_', ' ').title()
                 if subcategory == 'osint':
@@ -881,12 +935,21 @@ class PenTestNarrativeGenerator:
                 narrative.append(f"#### {subcategory_title}")
                 narrative.append("")
                 
-                for technique in techniques:
+                for entry in techniques:
+                    technique = entry["technique"]
+                    found = bool(entry.get("found", False))
                     # Add technique content
                     content = technique['content'].format(
                         testing_company=self.testing_company,
                         client_company=self.client_company
                     )
+                    # Add a safe, conditional final sentence so the narrative doesn't over-claim.
+                    tail = self._finding_tail_sentence(found)
+                    content = content.rstrip()
+                    if content and not content.endswith((".", "!", "?")):
+                        content += "."
+                    content = f"{content} {tail}"
+
                     narrative.append(content)
                     narrative.append("")
                     
@@ -900,7 +963,15 @@ class PenTestNarrativeGenerator:
         
         # Conclusion
         narrative.append("## CONCLUSION")
-        narrative.append(f"The comprehensive assessment conducted by {self.testing_company} against {self.client_company} revealed various security findings and provided valuable insights into the organization's security posture. The detailed methodology and findings presented in this narrative demonstrate the thoroughness of the assessment and provide a foundation for security improvements.")
+        any_found = any(bool(t.get("found", False)) for t in self.selected_techniques)
+        if any_found:
+            narrative.append(
+                f"The comprehensive assessment conducted by {self.testing_company} against {self.client_company} identified reportable security findings and provided valuable insights into the organization's security posture. The detailed methodology and findings presented in this narrative demonstrate the thoroughness of the assessment and provide a foundation for security improvements."
+            )
+        else:
+            narrative.append(
+                f"The comprehensive assessment conducted by {self.testing_company} against {self.client_company} did not identify any reportable security findings based on the activities performed and evidence collected during the engagement. The detailed methodology presented in this narrative demonstrates the thoroughness of the assessment and provides a foundation for ongoing security validation."
+            )
         narrative.append("")
         narrative.append(f"{self.testing_company} recommends that {self.client_company} prioritize the remediation of identified vulnerabilities and implement the security recommendations provided in the detailed findings section of this report.")
         
