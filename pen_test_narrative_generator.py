@@ -34,8 +34,8 @@ class PenTestNarrativeGenerator:
     def _finding_tail_sentence(self, found: bool) -> str:
         """Return a safe final sentence that does not over-claim findings."""
         if found:
-            return "Reportable findings identified during this activity are detailed in the Findings section of this report."
-        return "No reportable findings were identified during this activity."
+            return "Relevant observations from this activity are documented in the Findings section of this report."
+        return "No material issues or noteworthy observations were identified during this activity."
 
     def _subcategory_order(self, category: str) -> List[str]:
         """
@@ -966,11 +966,11 @@ class PenTestNarrativeGenerator:
         any_found = any(bool(t.get("found", False)) for t in self.selected_techniques)
         if any_found:
             narrative.append(
-                f"The comprehensive assessment conducted by {self.testing_company} against {self.client_company} identified reportable security findings and provided valuable insights into the organization's security posture. The detailed methodology and findings presented in this narrative demonstrate the thoroughness of the assessment and provide a foundation for security improvements."
+                f"The comprehensive assessment conducted by {self.testing_company} against {self.client_company} identified security observations and provided valuable insights into the organization's security posture. The detailed methodology and findings presented in this narrative demonstrate the thoroughness of the assessment and provide a foundation for security improvements."
             )
         else:
             narrative.append(
-                f"The comprehensive assessment conducted by {self.testing_company} against {self.client_company} did not identify any reportable security findings based on the activities performed and evidence collected during the engagement. The detailed methodology presented in this narrative demonstrates the thoroughness of the assessment and provides a foundation for ongoing security validation."
+                f"The comprehensive assessment conducted by {self.testing_company} against {self.client_company} did not identify any material security issues based on the activities performed and evidence collected during the engagement. The detailed methodology presented in this narrative demonstrates the thoroughness of the assessment and provides a foundation for ongoing security validation."
             )
         narrative.append("")
         narrative.append(f"{self.testing_company} recommends that {self.client_company} prioritize the remediation of identified vulnerabilities and implement the security recommendations provided in the detailed findings section of this report.")
